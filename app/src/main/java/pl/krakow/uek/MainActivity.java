@@ -2,11 +2,15 @@ package pl.krakow.uek;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -60,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Realm mRealm;
 
+    private Menu mMenu;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +80,39 @@ public class MainActivity extends AppCompatActivity {
         mRealm = Realm.getDefaultInstance();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add("Eksport CSV");
+        menu.add("Wyczyść bazę");
+        menu.add("Zobacz rezultat");
+        mMenu = menu;
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        String title = (String) item.getTitle();
+        if (title.equals("Eksport CSV")){
+            exportCSV();
+        } else if (title.equals("Wyczyść bazę")){
+            mRealm.executeTransactionAsync(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
+                    realm.where(Product.class).findAll().deleteAllFromRealm();
+                    realm.where(Review.class).findAll().deleteAllFromRealm();
+                }
+            }, new Realm.Transaction.OnSuccess() {
+                @Override
+                public void onSuccess() {
+                    mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Wyczyszczono bazę danych"));
+                }
+            });
+        } else if (title.equals("Zobacz rezultat")){
+            Intent intent = new Intent(this, ResultActivity.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @OnClick({R.id.e_button, R.id.t_button, R.id.l_button, R.id.etl_button})
     public void onClick(View view) {
@@ -87,11 +126,12 @@ public class MainActivity extends AppCompatActivity {
         if (!mProductId.equals("0")) {
             switch (id) {
                 case R.id.e_button:
-                    mTButton.setEnabled(false);
-                    mLButton.setEnabled(false);
                     processE(false);
                     break;
                 case R.id.t_button:
+                    mTButton.setEnabled(false);
+                    mTButton.setTextColor(Color.parseColor("#cccccc"));
+                    mTButton.setBackgroundResource(R.drawable.button_background_grey);
                     processT(false);
                     break;
                 case R.id.l_button:
@@ -106,6 +146,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void processE(boolean automatic) {
         mAllHtmls.clear();
+        mTButton.setEnabled(false);
+        mTButton.setTextColor(Color.parseColor("#cccccc"));
+        mTButton.setBackgroundResource(R.drawable.button_background_grey);
+        mLButton.setEnabled(false);
+        mLButton.setTextColor(Color.parseColor("#cccccc"));
+        mLButton.setBackgroundResource(R.drawable.button_background_grey);
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Rozpoczęto proces Extract"));
         String url = String.format("%s/%s%s", BASE_URL, mProductId, "#tab=reviews");
         mProgressDialog.show();
@@ -113,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getAllReviews(String url, final boolean automatic) {
+        mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Pobieranie " + (mAllHtmls.size() + 1) + " pliku"));
         RequestQueue queue = Volley.newRequestQueue(this);
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
@@ -133,6 +180,8 @@ public class MainActivity extends AppCompatActivity {
                                 mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Pobrano " + mAllHtmls.size() + " plików"));
                                 mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono proces Extract\n"));
                                 mTButton.setEnabled(true);
+                                mTButton.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary));
+                                mTButton.setBackgroundResource(R.drawable.button_background);
                                 if (automatic) {
                                     processT(automatic);
                                 }
@@ -156,6 +205,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processT(final boolean automatic) {
+        mTButton.setEnabled(false);
+        mTButton.setTextColor(Color.parseColor("#cccccc"));
+        mTButton.setBackgroundResource(R.drawable.button_background_grey);
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Rozpoczęto proces Transform"));
         mProgressDialog.show();
         new AsyncTask<String, String, String>(){
@@ -243,6 +295,8 @@ public class MainActivity extends AppCompatActivity {
                             mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Przetworzono dane o " + reviews.size() + " opiniach"));
                             mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono proces Transform\n"));
                             mLButton.setEnabled(true);
+                            mLButton.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary));
+                            mLButton.setBackgroundResource(R.drawable.button_background);
                             mProgressDialog.dismiss();
                             if (automatic){
                                 processL();
@@ -256,6 +310,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processL (){
+        mLButton.setEnabled(false);
+        mLButton.setTextColor(Color.parseColor("#cccccc"));
+        mLButton.setBackgroundResource(R.drawable.button_background_grey);
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Rozpoczęto proces Load"));
         mProgressDialog.show();
         mRealm.executeTransactionAsync(new Realm.Transaction() {
@@ -268,9 +325,11 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess() {
                 mProgressDialog.dismiss();
                 mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono proces Load\n"));
-                Intent intent = new Intent(MainActivity.this, ResultActivity.class);
-                startActivity(intent);
             }
         });
+    }
+
+    private void exportCSV (){
+        
     }
 }

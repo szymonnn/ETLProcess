@@ -24,34 +24,56 @@
             android:inputType="number"
             android:text="19299330" />
 
-        <Button
-            android:id="@+id/e_button"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="E" />
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dp">
+            <Button
+                android:layout_weight="0.5"
+                android:id="@+id/e_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/colorPrimary"
+                android:background="@drawable/button_background"
+                android:layout_marginRight="8dp"
+                android:text="E" />
 
-        <Button
-            android:id="@+id/t_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:enabled="false"
-            android:text="T" />
+            <Button
+                android:layout_weight="0.5"
+                android:id="@+id/t_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:enabled="false"
+                android:textColor="@color/colorPrimary"
+                android:background="@drawable/button_background"
+                android:layout_marginRight="8dp"
+                android:layout_marginLeft="8dp"
+                android:text="T" />
 
-        <Button
-            android:id="@+id/l_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:enabled="false"
-            android:text="L" />
+            <Button
+                android:layout_weight="0.5"
+                android:id="@+id/l_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:enabled="false"
+                android:textColor="@color/colorPrimary"
+                android:background="@drawable/button_background"
+                android:layout_marginLeft="8dp"
+                android:text="L" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/etl_button"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:textColor="@color/colorPrimary"
+            android:background="@drawable/button_background"
             android:text="ETL" />
     </LinearLayout>
 

@@ -3,7 +3,10 @@ package pl.krakow.uek;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -15,7 +18,10 @@ import io.realm.RealmResults;
 public class ResultActivity extends AppCompatActivity {
 
     @BindView(R.id.list_view)
-    ListView mListView;
+    ExpandableListView mListView;
+
+    @BindView(R.id.empty_view)
+    TextView mEmptyView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,11 +29,13 @@ public class ResultActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         Realm realm = Realm.getDefaultInstance();
         RealmResults<Product> products = realm.where(Product.class).findAll();
-        ArrayList<String> toList = new ArrayList<>();
+        ArrayList<Product> toList = new ArrayList<>();
         for (Product product : products){
-            toList.add(product.toString());
+            toList.add(product);
         }
-        mListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, toList));
+        mListView.setAdapter(new pl.krakow.uek.ExpandableListAdapter(this, toList));
+        mListView.setEmptyView(mEmptyView);
+
 
     }
 }
