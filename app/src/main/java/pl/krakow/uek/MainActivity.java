@@ -1,11 +1,16 @@
 package pl.krakow.uek;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -29,6 +34,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,7 +46,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
+import io.realm.RealmResults;
 
+/**
+ * Glowna klasa obslugujaca funkcje procesu ETL
+ */
 public class MainActivity extends AppCompatActivity {
 
     private ArrayList<String> mAllHtmls = new ArrayList<>();
@@ -83,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add("Eksport CSV");
-        menu.add("Wyczyść bazę");
+        menu.add("Eksport txt");
+        menu.add("Wyczyść dane");
         menu.add("Zobacz rezultat");
         mMenu = menu;
         return super.onCreateOptionsMenu(menu);
@@ -94,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
         String title = (String) item.getTitle();
         if (title.equals("Eksport CSV")){
             exportCSV();
-        } else if (title.equals("Wyczyść bazę")){
+        } else if (title.equals("Wyczyść dane")){
+            File parent = new File(Environment.getExternalStorageDirectory(), "ETL");
+            deleteDirectory(parent);
             mRealm.executeTransactionAsync(new Realm.Transaction() {
                 @Override
                 public void execute(Realm realm) {
@@ -104,14 +120,77 @@ public class MainActivity extends AppCompatActivity {
             }, new Realm.Transaction.OnSuccess() {
                 @Override
                 public void onSuccess() {
-                    mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Wyczyszczono bazę danych"));
+                    mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Wyczyszczono dane oraz usunięto pliki\n"));
                 }
             });
         } else if (title.equals("Zobacz rezultat")){
             Intent intent = new Intent(this, ResultActivity.class);
             startActivity(intent);
+        } else if (title.equals("Eksport txt")){
+            exportTxt();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     *
+     * Wybiera z bazy danych informacje o wszystkich produktach oraz zapisuje je jako pliki txt w pamieci urzadzenia.
+     */
+    private void exportTxt() {
+        RealmResults<Product> products = mRealm.where(Product.class).findAll();
+        mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Usuwanie poprzednich plików txt"));
+        File parent = new File(Environment.getExternalStorageDirectory(), "ETL");
+        parent.mkdir();
+        File txt = new File(parent, "txt");
+        deleteDirectory(txt);
+        for (Product product : products){
+            try{
+                mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Eksport opinii o produkcie z id: " + product.id));
+                parent = new File(Environment.getExternalStorageDirectory(), "ETL");
+                parent.mkdir();
+                txt = new File(parent, "txt");
+                txt.mkdir();
+                File productDirectory = new File(txt, product.id);
+                productDirectory.mkdir();
+                File file = new File(productDirectory, "produkt.txt");
+                FileOutputStream fOut = new FileOutputStream(file);
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fOut);
+                outputStreamWriter.write(product.toTxt());
+                outputStreamWriter.close();
+
+                for (Review review : product.reviews){
+                    File reviewDirectory = new File(productDirectory, "opinie");
+                    reviewDirectory.mkdir();
+                    File reviewFile = new File(reviewDirectory, review.id + " " + review.author + review.reviewDate + ".txt");
+                    FileOutputStream revfOut = new FileOutputStream(reviewFile);
+                    OutputStreamWriter revoutputStreamWriter = new OutputStreamWriter(revfOut);
+                    revoutputStreamWriter.write(review.toTxt());
+                    revoutputStreamWriter.close();
+                }
+            }
+            catch (IOException e) {
+                Log.e("Exception", "File write failed: " + e.toString());
+            }
+        }
+        mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono eksport plików txt\n"));
+        showOpenFolderDialog(parent);
+    }
+
+    /**
+     * Usuwa dany plik rekursywnie
+     * @param dir plik do usunięcia
+     */
+    private void deleteDirectory(File dir){
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                File f = new File(dir, children[i]);
+                if (f.isDirectory()){
+                    deleteDirectory(f);
+                }
+                f.delete();
+            }
+        }
     }
 
     @OnClick({R.id.e_button, R.id.t_button, R.id.l_button, R.id.etl_button})
@@ -158,6 +237,11 @@ public class MainActivity extends AppCompatActivity {
         getAllReviews(url, automatic);
     }
 
+    /**
+     * Metoda odpowiada za pobranie wszystkich plikow z opiniami na temat danego produktu
+     * @param url adres url produktu
+     * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
+     */
     private void getAllReviews(String url, final boolean automatic) {
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Pobieranie " + (mAllHtmls.size() + 1) + " pliku"));
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -204,6 +288,10 @@ public class MainActivity extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
+    /**
+     * Metoda odpowiada za przeksztalcenie plikow html do obiektow
+     * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
+     */
     private void processT(final boolean automatic) {
         mTButton.setEnabled(false);
         mTButton.setTextColor(Color.parseColor("#cccccc"));
@@ -309,6 +397,9 @@ public class MainActivity extends AppCompatActivity {
         }.execute();
     }
 
+    /**
+     * Metoda odpowiada za zapisanie obiektow do bazy danych
+     */
     private void processL (){
         mLButton.setEnabled(false);
         mLButton.setTextColor(Color.parseColor("#cccccc"));
@@ -329,7 +420,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Wybiera z bazy danych informacje o wszystkich produktach oraz zapisuje je jako pliki csv w pamieci urzadzenia.
+     */
     private void exportCSV (){
-        
+        RealmResults<Product> products = mRealm.where(Product.class).findAll();
+        mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Usuwanie poprzednich plików CSV"));
+        File parent = new File(Environment.getExternalStorageDirectory(), "ETL");
+        parent.mkdir();
+        File csv = new File(parent, "csv");
+        deleteDirectory(csv);
+        for (Product product : products){
+            try{
+                mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Eksport opinii o produkcie z id: " + product.id));
+                parent = new File(Environment.getExternalStorageDirectory(), "ETL");
+                parent.mkdir();
+                csv = new File(parent, "csv");
+                csv.mkdir();
+                File file = new File(csv, product.id + ".csv");
+                FileOutputStream fOut = new FileOutputStream(file);
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fOut);
+                outputStreamWriter.write(product.toCSV());
+                outputStreamWriter.close();
+            }
+            catch (IOException e) {
+                Log.e("Exception", "File write failed: " + e.toString());
+            }
+        }
+        mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono eksport plików CSV\n"));
+        showOpenFolderDialog(parent);
+    }
+
+    /**
+     * Metoda odpowiada za stworzenie okna dialogowego oraz otwarcie aplikacji obslugujacej przegladanie plikow
+     * @param parent folder do otwarcia
+     */
+    private void showOpenFolderDialog(final File parent) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Otwórz folder");
+        builder.setMessage("Czy chcesz otworzyć folder z zapisanymi plikami?");
+        builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Uri selectedUri = Uri.parse(parent.getPath());
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(selectedUri, "resource/folder");
+
+                if (intent.resolveActivityInfo(getPackageManager(), 0) != null)
+                {
+                    startActivity(intent);
+                }
+            }
+        });
+        builder.setNegativeButton("Nie", null);
+        builder.create().show();
     }
 }

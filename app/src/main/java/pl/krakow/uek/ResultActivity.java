@@ -15,6 +15,9 @@ import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
+/**
+ * Ekran wyswietlajacy liste wszystkich obiektow w bazie danych
+ */
 public class ResultActivity extends AppCompatActivity {
 
     @BindView(R.id.list_view)
