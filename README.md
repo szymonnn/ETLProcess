@@ -7,4 +7,5 @@ ETL to aplikacja stworzona jako projekt zaliczeniowy z przedmiotu Hurtownie Dany
 - do przetwarzania plików html z danymi o produktach wykorzystana została biblioteka [jsoup](https://jsoup.org/) w wersji 1.9.2  
 - do przechowywania danych lokalnie wykorzystane zostało rozwiązanie [realm.io](https://realm.io/docs/java/latest/) w wersji 2.2.0 dla języka Java
 
-## [Dokumentacja techniczna](http://google.pl)
+## Dokumentacja techniczna
+[Link do dokumentacji](http://v-ie.uek.krakow.pl/~s181182/)
