@@ -21,8 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:hint="Wpisz id produktu"
-            android:inputType="number"
-            android:text="19299330" />
+            android:inputType="number" />
 
         <LinearLayout
             android:orientation="horizontal"

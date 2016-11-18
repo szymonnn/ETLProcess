@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         menu.add("Eksport txt");
         menu.add("Wyczyść dane");
         menu.add("Zobacz rezultat");
+        menu.add("O aplikacji");
         mMenu = menu;
         return super.onCreateOptionsMenu(menu);
     }
@@ -106,9 +107,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         String title = (String) item.getTitle();
-        if (title.equals("Eksport CSV")){
+        if (title.equals("Eksport CSV")) {
             exportCSV();
-        } else if (title.equals("Wyczyść dane")){
+        } else if (title.equals("Wyczyść dane")) {
             File parent = new File(Environment.getExternalStorageDirectory(), "ETL");
             deleteDirectory(parent);
             mRealm.executeTransactionAsync(new Realm.Transaction() {
@@ -123,17 +124,22 @@ public class MainActivity extends AppCompatActivity {
                     mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Wyczyszczono dane oraz usunięto pliki\n"));
                 }
             });
-        } else if (title.equals("Zobacz rezultat")){
+        } else if (title.equals("Zobacz rezultat")) {
             Intent intent = new Intent(this, ResultActivity.class);
             startActivity(intent);
-        } else if (title.equals("Eksport txt")){
+        } else if (title.equals("Eksport txt")) {
             exportTxt();
+        } else if (title.equals("O aplikacji")) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("O aplikacji");
+            builder.setMessage("ETL to aplikacja stworzona jako projekt zaliczeniowy z przedmiotu Hurtownie Danych na kierunku Informatyka Stosowana na Uniwersytecie Ekonomicznym w Krakowie. Głównym celem aplikacji jest przeprowadzenie procesu ETL (Extract, Trasform, Load) na danych pobranych z serwisu Ceneo.pl.\n\nAutorzy: Szymon Nitecki, Kamil Walas, Katarzyna Konopelska, Aleksandra Kołodziejczyk\n\nIcon made by Freepik from www.flaticon.com");
+            builder.create().show();
+            builder.setNegativeButton("OK", null);
         }
         return super.onOptionsItemSelected(item);
     }
 
     /**
-     *
      * Wybiera z bazy danych informacje o wszystkich produktach oraz zapisuje je jako pliki txt w pamieci urzadzenia.
      */
     private void exportTxt() {
@@ -143,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
         parent.mkdir();
         File txt = new File(parent, "txt");
         deleteDirectory(txt);
-        for (Product product : products){
-            try{
+        for (Product product : products) {
+            try {
                 mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Eksport opinii o produkcie z id: " + product.id));
                 parent = new File(Environment.getExternalStorageDirectory(), "ETL");
                 parent.mkdir();
@@ -158,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 outputStreamWriter.write(product.toTxt());
                 outputStreamWriter.close();
 
-                for (Review review : product.reviews){
+                for (Review review : product.reviews) {
                     File reviewDirectory = new File(productDirectory, "opinie");
                     reviewDirectory.mkdir();
                     File reviewFile = new File(reviewDirectory, review.id + " " + review.author + review.reviewDate + ".txt");
@@ -167,8 +173,7 @@ public class MainActivity extends AppCompatActivity {
                     revoutputStreamWriter.write(review.toTxt());
                     revoutputStreamWriter.close();
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.e("Exception", "File write failed: " + e.toString());
             }
         }
@@ -178,14 +183,15 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Usuwa dany plik rekursywnie
+     *
      * @param dir plik do usunięcia
      */
-    private void deleteDirectory(File dir){
+    private void deleteDirectory(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
             for (int i = 0; i < children.length; i++) {
                 File f = new File(dir, children[i]);
-                if (f.isDirectory()){
+                if (f.isDirectory()) {
                     deleteDirectory(f);
                 }
                 f.delete();
@@ -239,7 +245,8 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Metoda odpowiada za pobranie wszystkich plikow z opiniami na temat danego produktu
-     * @param url adres url produktu
+     *
+     * @param url       adres url produktu
      * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
      */
     private void getAllReviews(String url, final boolean automatic) {
@@ -250,31 +257,29 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         Log.i("RESPONSE", response);
+                        mAllHtmls.add(response);
+                        Document doc = Jsoup.parse(response);
+                        Element pageNext = null;
                         try {
-                            mAllHtmls.add(response);
-                            Document doc = Jsoup.parse(response);
                             Element pagination = doc.getElementsByClass("pagination").get(0);
                             Elements li = pagination.getElementsByTag("li");
-                            Element pageNext = li.select(".arrow-next").first();
-                            if (pageNext != null) {
-                                String link = pageNext.getElementsByTag("a").first().attr("href");
-                                getAllReviews(BASE_URL + link, automatic);
-                            } else {
-                                mProgressDialog.dismiss();
-                                mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Pobrano " + mAllHtmls.size() + " plików"));
-                                mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono proces Extract\n"));
-                                mTButton.setEnabled(true);
-                                mTButton.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary));
-                                mTButton.setBackgroundResource(R.drawable.button_background);
-                                if (automatic) {
-                                    processT(automatic);
-                                }
-                            }
-                        } catch (IndexOutOfBoundsException e){
+                            pageNext = li.select(".arrow-next").first();
+                        } catch (IndexOutOfBoundsException e) {
                             e.printStackTrace();
+                        }
+                        if (pageNext != null) {
+                            String link = pageNext.getElementsByTag("a").first().attr("href");
+                            getAllReviews(BASE_URL + link, automatic);
+                        } else {
                             mProgressDialog.dismiss();
-                            Toast.makeText(MainActivity.this, "Produkt o danym id nie istnieje", Toast.LENGTH_SHORT).show();
-                            mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Proces Extract został przerwany\n"));
+                            mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Ilość pobranych plików: " + mAllHtmls.size()));
+                            mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Zakończono proces Extract\n"));
+                            mTButton.setEnabled(true);
+                            mTButton.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary));
+                            mTButton.setBackgroundResource(R.drawable.button_background);
+                            if (automatic) {
+                                processT(automatic);
+                            }
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -290,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Metoda odpowiada za przeksztalcenie plikow html do obiektow
+     *
      * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
      */
     private void processT(final boolean automatic) {
@@ -298,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         mTButton.setBackgroundResource(R.drawable.button_background_grey);
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Rozpoczęto proces Transform"));
         mProgressDialog.show();
-        new AsyncTask<String, String, String>(){
+        new AsyncTask<String, String, String>() {
 
             @Override
             protected String doInBackground(String... strings) {
@@ -386,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                             mLButton.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary));
                             mLButton.setBackgroundResource(R.drawable.button_background);
                             mProgressDialog.dismiss();
-                            if (automatic){
+                            if (automatic) {
                                 processL();
                             }
                         }
@@ -400,7 +406,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Metoda odpowiada za zapisanie obiektow do bazy danych
      */
-    private void processL (){
+    private void processL() {
         mLButton.setEnabled(false);
         mLButton.setTextColor(Color.parseColor("#cccccc"));
         mLButton.setBackgroundResource(R.drawable.button_background_grey);
@@ -423,15 +429,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Wybiera z bazy danych informacje o wszystkich produktach oraz zapisuje je jako pliki csv w pamieci urzadzenia.
      */
-    private void exportCSV (){
+    private void exportCSV() {
         RealmResults<Product> products = mRealm.where(Product.class).findAll();
         mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Usuwanie poprzednich plików CSV"));
         File parent = new File(Environment.getExternalStorageDirectory(), "ETL");
         parent.mkdir();
         File csv = new File(parent, "csv");
         deleteDirectory(csv);
-        for (Product product : products){
-            try{
+        for (Product product : products) {
+            try {
                 mLogTextView.setText(String.format("%s\n%s", mLogTextView.getText(), "Eksport opinii o produkcie z id: " + product.id));
                 parent = new File(Environment.getExternalStorageDirectory(), "ETL");
                 parent.mkdir();
@@ -442,8 +448,7 @@ public class MainActivity extends AppCompatActivity {
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fOut);
                 outputStreamWriter.write(product.toCSV());
                 outputStreamWriter.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.e("Exception", "File write failed: " + e.toString());
             }
         }
@@ -453,6 +458,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Metoda odpowiada za stworzenie okna dialogowego oraz otwarcie aplikacji obslugujacej przegladanie plikow
+     *
      * @param parent folder do otwarcia
      */
     private void showOpenFolderDialog(final File parent) {
@@ -466,8 +472,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setDataAndType(selectedUri, "resource/folder");
 
-                if (intent.resolveActivityInfo(getPackageManager(), 0) != null)
-                {
+                if (intent.resolveActivityInfo(getPackageManager(), 0) != null) {
                     startActivity(intent);
                 }
             }
