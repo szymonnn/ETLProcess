@@ -11,5 +11,11 @@ ETL to aplikacja stworzona jako projekt zaliczeniowy z przedmiotu Hurtownie Dany
 ## Dokumentacja techniczna
 [Link do dokumentacji](http://v-ie.uek.krakow.pl/~s181182/)
 
+## Projekt bazy danych
+Ponieważ technologia użyta do przechowywania danych jest obiektowa istnieją dwie klasy reprezentujące obiekty w bazie danych:
+- [Product](http://v-ie.uek.krakow.pl/~s181182/pl/krakow/uek/model/Product.html) - klasa reprezentująca produkty
+- [Review](http://v-ie.uek.krakow.pl/~s181182/pl/krakow/uek/model/Review.html) - klasa reprezentująca opinie o produktach
+Każdy produkt posiada listę z obiektami typu Review - co odpowiada relacji 1 - &#8734; w relacyjnych bazach danych 
+
 ## Instrukcja użytkownika
 [Link do instrukcji](https://docs.google.com/presentation/d/1HMFL0xjRb8wYqnbS5GlmsSTnOxsO483PdHdGJ8sx2bM/edit#slide=id.p)
