@@ -1,11 +1,8 @@
-package pl.krakow.uek;
+package pl.krakow.uek.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -14,6 +11,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import pl.krakow.uek.model.Product;
+import pl.krakow.uek.R;
 
 /**
  * Ekran wyswietlajacy liste wszystkich obiektow w bazie danych
@@ -36,7 +35,7 @@ public class ResultActivity extends AppCompatActivity {
         for (Product product : products){
             toList.add(product);
         }
-        mListView.setAdapter(new pl.krakow.uek.ExpandableListAdapter(this, toList));
+        mListView.setAdapter(new pl.krakow.uek.utils.ExpandableListAdapter(this, toList));
         mListView.setEmptyView(mEmptyView);
 
 

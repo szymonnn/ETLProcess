@@ -1,6 +1,4 @@
-package pl.krakow.uek;
-
-import java.util.ArrayList;
+package pl.krakow.uek.model;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;

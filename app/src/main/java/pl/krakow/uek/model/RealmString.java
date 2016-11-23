@@ -1,9 +1,9 @@
-package pl.krakow.uek;
+package pl.krakow.uek.model;
 
 import io.realm.RealmObject;
 
 /**
- * Created by szymon on 26.10.16.
+ * Klasa reprezentująca tekst w Realmie. Stworzona, poneważ Realm nie może zapisać tablicy String
  */
 public class RealmString extends RealmObject{
     private String mString;

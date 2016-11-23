@@ -1,7 +1,6 @@
-package pl.krakow.uek;
+package pl.krakow.uek.activities;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -47,6 +46,10 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import pl.krakow.uek.model.Product;
+import pl.krakow.uek.R;
+import pl.krakow.uek.model.RealmString;
+import pl.krakow.uek.model.Review;
 
 /**
  * Glowna klasa obslugujaca funkcje procesu ETL
@@ -79,6 +82,10 @@ public class MainActivity extends AppCompatActivity {
 
     private Menu mMenu;
 
+    /**
+     * Metoda inicjalizujaca widoki i baze danych
+     * @param savedInstanceState niewykorzystywany
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +100,10 @@ public class MainActivity extends AppCompatActivity {
         mRealm = Realm.getDefaultInstance();
     }
 
+    /**
+     * Metoda tworzaca tzw. OverflowMenu
+     * @param menu menu, do ktorego dopisane sa opcje
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add("Eksport CSV");
@@ -104,6 +115,10 @@ public class MainActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * Metoda wywolywana po wybraniu opcji w menu
+     * @param item opcja w menu
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         String title = (String) item.getTitle();
@@ -199,6 +214,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Metoda obslugujaca klikniecia w przyciski
+     * @param view widok klikniety
+     */
     @OnClick({R.id.e_button, R.id.t_button, R.id.l_button, R.id.etl_button})
     public void onClick(View view) {
         int id = view.getId();
@@ -229,6 +248,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Metoda wykonuje proces Extract
+     * @param automatic
+     */
     private void processE(boolean automatic) {
         mAllHtmls.clear();
         mTButton.setEnabled(false);
@@ -244,7 +267,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Metoda odpowiada za pobranie wszystkich plikow z opiniami na temat danego produktu
+     * Metoda odpowiada za pobranie wszystkich plikow z opiniami na temat danego produktu.
+     * Pierwszy url do pobrania opinii to http://ceneo.pl/[id_produktu]#tab=reviews. Strona zapisywana jest do tablicy oraz wybierany jest element o klasie "pagination",
+     * w ktorym znajduje sie lista z kolejnymi adresami url. Pobierany jest pierwszy tag "a" o atrybucie "href" i wywolywana
+     * jest ta sama metoda z nastepnym url.
      *
      * @param url       adres url produktu
      * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
@@ -294,7 +320,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Metoda odpowiada za przeksztalcenie plikow html do obiektow
+     * Metoda odpowiada za przeksztalcenie plikow html do obiektow. Z Pierwszego pliku pobranego w poprzednim procesie
+     * odczytywane są dane o produkcie. Oraz o pierwszych opiniach. Dla każdego kolejnego pliku odczytywane są dane o
+     * opiniach i zapisywane jako lista obiektów.
      *
      * @param automatic wskazuje czy nastepny proces ma uruchomic się automatycznie
      */

@@ -1,13 +1,6 @@
-package pl.krakow.uek;
+package pl.krakow.uek.model;
 
-import android.content.Context;
-import android.util.Log;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;
