@@ -47,8 +47,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:enabled="false"
-                android:textColor="@color/colorPrimary"
-                android:background="@drawable/button_background"
+                android:textColor="#cccccc"
+                android:background="@drawable/button_background_grey"
                 android:layout_marginRight="8dp"
                 android:layout_marginLeft="8dp"
                 android:text="T" />
@@ -60,8 +60,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:enabled="false"
-                android:textColor="@color/colorPrimary"
-                android:background="@drawable/button_background"
+                android:textColor="#cccccc"
+                android:background="@drawable/button_background_grey"
                 android:layout_marginLeft="8dp"
                 android:text="L" />
         </LinearLayout>
